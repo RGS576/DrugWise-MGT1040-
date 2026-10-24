@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrugWise — Pocket Medicine Guardian & Generic Advisor</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome 6 for Medical & UI Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            medblue: {
+              50: '#F0F7FF',
+              100: '#E0EFFF',
+              200: '#BAE0FF',
+              300: '#7CC4FA',
+              400: '#38A3F8',
+              500: '#0F87E6',
+              600: '#026BC4',
+              700: '#02549E',
+              800: '#064782',
+              900: '#0A3B6B',
+              950: '#062547'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F4F8FC;
+      color: #0F253C;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #E2EEF9;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #93C5FD;
+      border-radius: 9999px;
+    }
+    /* Smooth card flip/hover overlay */
+    .alternative-card {
+      transition: all 0.28s ease;
+    }
+    .alternative-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 25px -4px rgba(2, 84, 158, 0.12), 0 6px 12px -4px rgba(2, 84, 158, 0.08);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#F3F7FC] text-[#0F253C]">
+
+  <!-- Toast Notification Container -->
+  <div id="toastBox" class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+  <!-- ================= TOP NAVIGATION HEADER ================= -->
+  <header class="bg-gradient-to-r from-medblue-950 via-medblue-900 to-medblue-800 text-white shadow-lg sticky top-0 z-40 border-b border-medblue-700/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Brand Logo & Identity -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchMainTab('know')">
+          <div class="w-12 h-12 bg-gradient-to-tr from-medblue-500 to-sky-400 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-950/40 transform hover:scale-105 transition">
+            <i class="fa-solid fa-capsules text-2xl text-white"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-2xl font-black tracking-tight text-white">Drug<span class="text-sky-300">Wise</span></span>
+              <span class="text-[11px] bg-medblue-500/30 text-sky-200 font-semibold px-2 py-0.5 rounded-full border border-sky-400/30">India Rx</span>
+            </div>
+            <p class="text-xs text-sky-200 hidden sm:block font-medium">Smart Drug Safety & Generic Price Comparator</p>
+          </div>
+        </div>
+
+        <!-- ONLY 2 MAIN NAVIGATION TABS -->
+        <nav class="flex items-center space-x-1 sm:space-x-2 bg-medblue-950/70 p-1.5 rounded-2xl border border-medblue-700/50 shadow-inner">
+          <button id="navBtn-know" onclick="switchMainTab('know')" class="nav-tab-btn flex items-center space-x-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm bg-medblue-600 text-white border border-sky-400/40">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+            <span>1. Know Your Drug</span>
+          </button>
+          <button id="navBtn-my" onclick="switchMainTab('my')" class="nav-tab-btn flex items-center space-x-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition text-sky-200 hover:text-white hover:bg-medblue-800/60">
+            <i class="fa-solid fa-kit-medical"></i>
+            <span>2. My Drugs</span>
+            <span id="myDrugsCountBadge" class="ml-1 bg-sky-400/30 text-sky-200 text-[10px] px-1.5 py-0.5 rounded-full font-bold">3</span>
+          </button>
+        </nav>
+
+        <!-- Customer Sign-in / Profile Indicator -->
+        <div class="flex items-center">
+          <button onclick="openProfileModal()" class="flex items-center space-x-3 bg-medblue-800/70 hover:bg-medblue-700/80 border border-sky-400/30 px-3.5 py-2 rounded-2xl transition shadow-md group">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-400 to-medblue-500 flex items-center justify-center text-white font-black text-sm shadow">
+              <span id="profileAvatarInitial">R</span>
+            </div>
+            <div class="text-left hidden md:block">
+              <div class="flex items-center space-x-1.5">
+                <span id="profileHeaderName" class="text-xs font-bold text-white group-hover:text-sky-200 transition">Ramesh Kumar</span>
+                <span id="profileHeaderAge" class="text-[10px] text-sky-300 bg-medblue-900 px-1.5 py-0.2 rounded font-semibold">58y</span>
+              </div>
+              <p id="profileHeaderConditionsSummary" class="text-[10px] text-sky-200 truncate max-w-[140px]">Hypertension, Acidity</p>
+            </div>
+            <i class="fa-solid fa-sliders text-sky-300 text-xs pl-1"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= TOP DYNAMIC SAFETY & INTERACTION ALERT BANNER ================= -->
+  <!-- Automatically recalculates based on user's conditions & medications -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 w-full">
+    <div id="dynamicSafetyBannerContainer">
+      <!-- Injected by JavaScript evaluatePatientInteractions() -->
+    </div>
+  </section>
+
+  <!-- ================= MAIN APP WRAPPER ================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- ============================================================== -->
+    <!-- SECTION 1: KNOW YOUR DRUG                                      -->
+    <!-- ============================================================== -->
+    <section id="section-know-drug" class="app-section space-y-6">
+      
+      <!-- Search Banner & Filter -->
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-sky-100 shadow-sm relative overflow-hidden">
+        <div class="absolute -right-8 -top-8 w-48 h-48 bg-medblue-100/60 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="max-w-3xl space-y-2">
+          <div class="inline-flex items-center space-x-2 bg-medblue-50 text-medblue-700 text-xs font-bold px-3 py-1 rounded-full border border-medblue-200">
+            <i class="fa-solid fa-shield-heart text-medblue-500"></i>
+            <span>Personalized Health Safety & Generic Engine</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-medblue-950">Know Your Drug</h1>
+          <p class="text-slate-600 text-xs sm:text-sm">
+            Search any medicine in India to instantly verify if it's safe for your <strong class="text-medblue-800">specific medical conditions</strong>, check dangerous food/drug interactions, and find certified low-cost generic substitutes.
+          </p>
+        </div>
+
+        <!-- Search Bar with Instant Suggestions -->
+        <div class="mt-6 max-w-4xl relative">
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-medblue-400 text-base"></i>
+            <input 
+              type="text" 
+              id="knowDrugSearchInput" 
+              oninput="handleKnowDrugSearch(this.value)" 
+              placeholder="Search any medicine (e.g., Eno Fruit Salt, Gelusil, Telma 40, Glycomet, Combiflam, Pan-D)..." 
+              class="w-full pl-12 pr-28 py-4 rounded-2xl border-2 border-medblue-100 focus:outline-none focus:border-medblue-500 bg-white shadow-inner text-sm font-semibold text-slate-800 placeholder-slate-400"
+            >
+            <button onclick="clearSearch()" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl transition">
+              Clear
+            </button>
+          </div>
+
+          <!-- Quick Discovery Tags -->
+          <div class="flex items-center flex-wrap gap-2 mt-3 text-xs">
+            <span class="text-slate-500 font-semibold"><i class="fa-solid fa-bolt text-amber-500 mr-1"></i>Try Searching:</span>
+            <button onclick="applySearchQuery('Eno Fruit Salt (High Sodium)')" class="px-3 py-1 rounded-full bg-medblue-50 hover:bg-medblue-100 text-medblue-800 font-semibold border border-medblue-200 transition">Eno (Antacid)</button>
+            <button onclick="applySearchQuery('Gelusil Liquid (Low Sodium)')" class="px-3 py-1 rounded-full bg-medblue-50 hover:bg-medblue-100 text-medblue-800 font-semibold border border-medblue-200 transition">Gelusil Liquid</button>
+            <button onclick="applySearchQuery('Telma 40')" class="px-3 py-1 rounded-full bg-medblue-50 hover:bg-medblue-100 text-medblue-800 font-semibold border border-medblue-200 transition">Telma 40 (BP)</button>
+            <button onclick="applySearchQuery('Combiflam')" class="px-3 py-1 rounded-full bg-medblue-50 hover:bg-medblue-100 text-medblue-800 font-semibold border border-medblue-200 transition">Combiflam (Painkiller)</button>
+            <button onclick="applySearchQuery('Glycomet 500')" class="px-3 py-1 rounded-full bg-medblue-50 hover:bg-medblue-100 text-medblue-800 font-semibold border border-medblue-200 transition">Glycomet 500 (Sugar)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Searched Drug Detailed Intelligence View -->
+      <div id="knowDrugResultContainer">
+        <!-- Rendered dynamically by renderKnowDrugAnalysis() -->
+      </div>
+
+      <!-- Recommended Drug Alternatives for User's Medical Conditions Feed -->
+      <div class="bg-gradient-to-br from-white to-blue-50/40 rounded-3xl p-6 sm:p-8 border border-sky-100 shadow-sm space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-sky-100 pb-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-user-doctor text-medblue-600 text-lg"></i>
+              <h2 class="text-xl font-bold text-medblue-950">Recommended Alternatives For Your Health Profile</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">
+              Curated medications and low-risk generic formulations matched with your current conditions: <strong id="recProfileConditions" class="text-medblue-700">Hypertension, GERD/Acidity</strong>
+            </p>
+          </div>
+          <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300 self-start sm:self-auto">
+            Personalized Filter Active
+          </span>
+        </div>
+
+        <div id="suggestedConditionDrugsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Dynamically populated based on active conditions -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 2: MY DRUGS                                            -->
+    <!-- ============================================================== -->
+    <section id="section-my-drugs" class="app-section hidden space-y-6">
+      
+      <!-- My Drugs Header & Quick Management -->
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-sky-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-2xl bg-medblue-100 text-medblue-700 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-prescription-bottle-medical text-lg"></i>
+            </div>
+            <div>
+              <h1 class="text-2xl font-extrabold text-medblue-950">My Current Medications</h1>
+              <p class="text-xs text-slate-500">
+                Hover over or tap any medicine card to explore cheaper generic equivalents, active salt differences, and <span class="font-bold text-emerald-700">"Better For You"</span> health guidance.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="openAddDrugModal()" class="bg-medblue-600 hover:bg-medblue-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-medblue-600/20 flex items-center space-x-2 transition">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add New Medicine</span>
+          </button>
+          <button onclick="openProfileModal()" class="bg-medblue-50 hover:bg-medblue-100 text-medblue-800 font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-medblue-200 transition">
+            <i class="fa-solid fa-user-pen mr-1"></i> Edit Conditions
+          </button>
+        </div>
+      </div>
+
+      <!-- User Active Conditions Banner in My Drugs -->
+      <div class="bg-medblue-900 text-white rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-sm border border-medblue-700">
+        <div class="flex items-center space-x-3">
+          <i class="fa-solid fa-notes-medical text-sky-300 text-xl"></i>
+          <div>
+            <span class="text-[11px] font-bold text-sky-200 uppercase tracking-wider">Patient Health Background</span>
+            <p id="myDrugsPatientSummary" class="text-sm font-bold text-white">Ramesh Kumar (58 yrs) — Diagnosed: Hypertension, Type 2 Diabetes, GERD / Acid Reflux</p>
+          </div>
+        </div>
+        <div class="text-xs bg-medblue-950/80 px-3 py-1.5 rounded-xl border border-medblue-700 text-sky-200">
+          <span class="text-emerald-400 font-bold" id="totalMonthlySavingsIndicator">Potential Monthly Savings: ₹384 / mo</span>
+        </div>
+      </div>
+
+      <!-- Current Medications Grid with Hover Alternatives -->
+      <div id="myDrugsCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Injected dynamically by renderMyDrugsCards() -->
+      </div>
+
+      <!-- Suggested Safer Alternatives for Your Regimen -->
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-sky-100 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-medblue-950 flex items-center space-x-2">
+              <i class="fa-solid fa-arrow-trend-down text-emerald-600"></i>
+              <span>One-Click Cost & Safety Optimization for Your Cabinet</span>
+            </h3>
+            <p class="text-xs text-slate-500">Switching all your branded drugs to government-approved Jan Aushadhi generic equivalents cuts your pharmacy budget significantly without changing pharmacological efficacy.</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border border-sky-100 rounded-2xl overflow-hidden">
+            <thead class="bg-medblue-50 text-medblue-950 uppercase font-bold text-[10px] tracking-wider border-b border-sky-100">
+              <tr>
+                <th class="p-3.5">Your Current Branded Drug</th>
+                <th class="p-3.5">Active Salt Composition</th>
+                <th class="p-3.5">Certified Generic Alternative</th>
+                <th class="p-3.5">Current MRP</th>
+                <th class="p-3.5">Generic Price</th>
+                <th class="p-3.5 text-emerald-700 font-bold">Monthly Savings</th>
+                <th class="p-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="quickSavingsSummaryTableBody" class="divide-y divide-sky-50 bg-white">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= CUSTOMER SIGN-IN / HEALTH PROFILE MODAL ================= -->
+  <div id="profileModal" class="fixed inset-0 bg-medblue-950/70 z-50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full overflow-hidden shadow-2xl border border-sky-100 animate-fadeIn">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-medblue-950 to-medblue-800 p-5 text-white flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-xl bg-medblue-600 flex items-center justify-center">
+            <i class="fa-solid fa-user-shield text-sky-200"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base">Customer Profile & Medical History</h3>
+            <p class="text-[11px] text-sky-200">Used for continuous adverse interaction checks</p>
+          </div>
+        </div>
+        <button onclick="closeProfileModal()" class="text-sky-200 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Profile Form -->
+      <form onsubmit="handleSaveProfile(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scroll">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Customer Full Name</label>
+            <input type="text" id="inputProfName" required value="Ramesh Kumar" class="w-full p-3 rounded-xl border border-slate-300 focus:border-medblue-500 focus:ring-1 focus:ring-medblue-500 text-xs font-semibold text-slate-800">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Age (Years)</label>
+            <input type="number" id="inputProfAge" min="1" max="110" required value="58" class="w-full p-3 rounded-xl border border-slate-300 focus:border-medblue-500 focus:ring-1 focus:ring-medblue-500 text-xs font-semibold text-slate-800">
+          </div>
+        </div>
+
+        <!-- Medical Problems / Chronic Conditions Selector -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+            Active Medical Problems & Diagnoses (Select all that apply):
+          </label>
+          <p class="text-[11px] text-slate-500 mb-2">Our clinical rules evaluate each drug against these conditions.</p>
+          
+          <div id="conditionsCheckboxGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <!-- Populated dynamically with toggleable condition cards -->
+          </div>
+        </div>
+
+        <!-- Initial Medications Selector Checklist -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+            Current Prescriptions In Your Routine:
+          </label>
+          <p class="text-[11px] text-slate-500 mb-2">Select the medicines you take right now to store in "2. My Drugs":</p>
+          
+          <div id="quickMedChecklistContainer" class="space-y-1.5 max-h-40 overflow-y-auto custom-scroll border rounded-xl p-2 bg-slate-50">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeProfileModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl text-xs font-bold bg-medblue-600 hover:bg-medblue-700 text-white shadow-md shadow-medblue-600/30 transition">
+            Save & Update Safety Alerts
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= ADD NEW DRUG MODAL ================= -->
+  <div id="addDrugModal" class="fixed inset-0 bg-medblue-950/70 z-50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-sky-100 animate-fadeIn">
+      <div class="bg-medblue-900 p-5 text-white flex items-center justify-between">
+        <h3 class="font-extrabold text-sm sm:text-base flex items-center space-x-2">
+          <i class="fa-solid fa-pills text-sky-300"></i>
+          <span>Add Medicine to "My Drugs"</span>
+        </h3>
+        <button onclick="closeAddDrugModal()" class="text-sky-200 hover:text-white transition"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form onsubmit="handleManualAddDrug(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select from Indian Medicine Catalog</label>
+          <select id="addDrugCatalogSelect" onchange="fillDrugDefaults(this.value)" class="w-full p-3 rounded-xl border border-slate-300 text-xs font-semibold">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Dosage / Strength</label>
+            <input type="text" id="addDrugDosage" required placeholder="e.g. 40 mg" class="w-full p-2.5 rounded-xl border text-xs font-semibold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Daily Frequency</label>
+            <input type="text" id="addDrugFrequency" required placeholder="e.g. 1 Tablet Morning" class="w-full p-2.5 rounded-xl border text-xs font-semibold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Medicine Image / Icon Category</label>
+          <select id="addDrugIcon" class="w-full p-2.5 rounded-xl border text-xs font-semibold">
+            <option value="capsules">Capsule Strip (General)</option>
+            <option value="tablets">Round Tablet (Hypertension/Cardio)</option>
+            <option value="bottle">Syrup / Suspension Bottle</option>
+            <option value="powder">Sachet / Effervescent Powder</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Purpose / Notes</label>
+          <input type="text" id="addDrugPurpose" placeholder="e.g. For morning blood pressure control" class="w-full p-2.5 rounded-xl border text-xs font-semibold">
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-medblue-600 hover:bg-medblue-700 text-white font-bold text-xs rounded-xl shadow-md transition">
+          Confirm & Add to Cabinet
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-medblue-950 text-sky-200 text-xs py-8 border-t border-medblue-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-6 h-6 rounded-lg bg-medblue-500 flex items-center justify-center text-white text-xs font-bold">
+          <i class="fa-solid fa-capsules"></i>
+        </div>
+        <span class="text-white font-extrabold text-sm">DrugWise</span>
+        <span class="text-sky-400">| Pocket Medicine Guardian</span>
+      </div>
+      <p class="text-sky-300/80 text-center md:text-left">
+        CDSCO & Jan Aushadhi generic benchmarks. Clinical contraindication alerts are for informational purposes; consult your physician.
+      </p>
+      <div class="flex items-center space-x-4 text-sky-300">
+        <span class="hover:text-white cursor-pointer" onclick="openProfileModal()"><i class="fa-solid fa-user-gear mr-1"></i>Profile</span>
+        <span class="hover:text-white cursor-pointer" onclick="switchMainTab('know')">Search</span>
+        <span class="hover:text-white cursor-pointer" onclick="switchMainTab('my')">My Drugs</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= JAVASCRIPT LOGIC & CLINICAL DATABASE ================= -->
+  <script>
+    // -------------------------------------------------------------
+    // 1. MASTER CLINICAL DATABASE OF COMMON INDIAN PHARMACEUTICALS
+    // -------------------------------------------------------------
+    const CLINICAL_MEDICINES = [
+      {
+        id: "eno",
+        brand_name: "Eno Fruit Salt (High Sodium)",
+        generic_salt: "Sodium Bicarbonate + Citric Acid + Sodium Carbonate",
+        category: "Antacid / Effervescent",
+        mrp_inr: 95.0, // Multi-sachet pack
+        generic_price_inr: 22.0,
+        generic_equivalent_name: "Magaldrate + Simethicone Gel (Low Sodium)",
+        brand_manufacturer: "GSK Consumer Health",
+        icon_type: "powder",
+        picture_emoji: "🧪",
+        purpose: "Rapid relief from acidity and heartburn",
+        sodium_content: "High (approx 850mg sodium per 5g sachet)",
+        food_warning: "Do not consume on an excessively full stomach. Do not exceed 14 consecutive days.",
+        // Conditions this drug clashes with:
+        contraindicated_conditions: [
+          {
+            condition: "Hypertension",
+            severity: "CRITICAL",
+            reason: "High sodium load (~850mg/dose) causes acute systemic fluid retention, directly counteracting blood pressure medications and triggering sudden blood pressure spikes!"
+          },
+          {
+            condition: "Heart Failure",
+            severity: "CRITICAL",
+            reason: "Excessive sodium intake precipitates acute congestive decompensation and peripheral edema."
+          },
+          {
+            condition: "Chronic Kidney Disease",
+            severity: "CRITICAL",
+            reason: "Impaired sodium clearance can cause hypernatremia, metabolic alkalosis, and fluid overload."
+          }
+        ],
+        better_alternative_rationale: "Switch to a low-sodium, non-effervescent antacid (like Magaldrate + Simethicone or Pantoprazole) to avoid dangerous blood pressure surges while relieving reflux."
+      },
+      {
+        id: "gelusil",
+        brand_name: "Gelusil MPS Liquid (Low Sodium)",
+        generic_salt: "Aluminium Hydroxide + Magnesium Hydroxide + Simethicone",
+        category: "Non-systemic Antacid",
+        mrp_inr: 125.0,
+        generic_price_inr: 45.0,
+        generic_equivalent_name: "Jan Aushadhi Antacid Suspension",
+        brand_manufacturer: "Pfizer India",
+        icon_type: "bottle",
+        picture_emoji: "🧴",
+        purpose: "Low-sodium heartburn & stomach gas relief",
+        sodium_content: "Essentially Sodium Free",
+        food_warning: "Take 1-2 hours after meals and at bedtime for prolonged soothing.",
+        contraindicated_conditions: [
+          {
+            condition: "Chronic Kidney Disease",
+            severity: "MODERATE",
+            reason: "Aluminium and Magnesium components can accumulate in severe renal failure."
+          }
+        ],
+        better_alternative_rationale: "Safe choice for Hypertension patients because it does not deliver a systemic sodium surge."
+      },
+      {
+        id: "telma40",
+        brand_name: "Telma 40",
+        generic_salt: "Telmisartan (40mg)",
+        category: "Antihypertensive (ARB)",
+        mrp_inr: 142.50,
+        generic_price_inr: 28.00,
+        generic_equivalent_name: "Jan Aushadhi Telmisartan 40mg",
+        brand_manufacturer: "Glenmark Pharmaceuticals",
+        icon_type: "tablets",
+        picture_emoji: "💊",
+        purpose: "Maintains optimal blood pressure & vascular health",
+        sodium_content: "None",
+        food_warning: "Avoid potassium-based salt substitutes and potassium supplements without blood testing.",
+        contraindicated_conditions: [
+          {
+            condition: "Pregnancy",
+            severity: "CRITICAL",
+            reason: "Contraindicated in pregnancy due to fetal renal dysfunction risk."
+          }
+        ],
+        better_alternative_rationale: "Jan Aushadhi Telmisartan gives 100% bioequivalent blood pressure control at an 80% price reduction (Save ₹114/month)."
+      },
+      {
+        id: "glycomet500",
+        brand_name: "Glycomet 500",
+        generic_salt: "Metformin Hydrochloride (500mg)",
+        category: "Oral Antidiabetic",
+        mrp_inr: 65.00,
+        generic_price_inr: 14.50,
+        generic_equivalent_name: "Jan Aushadhi Metformin 500mg",
+        brand_manufacturer: "USV Ltd",
+        icon_type: "tablets",
+        picture_emoji: "⚪",
+        purpose: "Controls blood sugar in Type 2 Diabetes",
+        sodium_content: "None",
+        food_warning: "Take with or right after major meals to prevent stomach upset or nausea.",
+        contraindicated_conditions: [
+          {
+            condition: "Severe Kidney Disease",
+            severity: "CRITICAL",
+            reason: "Risk of fatal lactic acidosis if eGFR falls below 30 mL/min."
+          }
+        ],
+        better_alternative_rationale: "Generic Metformin saves ~₹50/month with identical glycemic control."
+      },
+      {
+        id: "combiflam",
+        brand_name: "Combiflam",
+        generic_salt: "Ibuprofen (400mg) + Paracetamol (325mg)",
+        category: "NSAID Analgesic",
+        mrp_inr: 45.00,
+        generic_price_inr: 16.00,
+        generic_equivalent_name: "Jan Aushadhi Paracetamol + Ibuprofen",
+        brand_manufacturer: "Sanofi India",
+        icon_type: "capsules",
+        picture_emoji: "🔴",
+        purpose: "Relief for headaches, dental pain, fever, joint swelling",
+        sodium_content: "Minimal",
+        food_warning: "Always take after food. Never combine with alcohol due to liver & stomach lining stress.",
+        contraindicated_conditions: [
+          {
+            condition: "GERD / Acid Reflux",
+            severity: "CRITICAL",
+            reason: "NSAIDs inhibit protective stomach prostaglandins, worsening gastric erosion and triggering severe acid rebound or bleeding ulcers."
+          },
+          {
+            condition: "Hypertension",
+            severity: "MODERATE",
+            reason: "NSAIDs decrease renal prostaglandin synthesis, reducing the antihypertensive effect of ARBs/ACE inhibitors like Telmisartan."
+          },
+          {
+            condition: "Asthma",
+            severity: "MODERATE",
+            reason: "Can induce bronchospasm in aspirin-sensitive asthmatic individuals."
+          }
+        ],
+        better_alternative_rationale: "For patients with Acid Reflux or Hypertension, pure Paracetamol (500mg/650mg) is far gentler on the gastric mucosal lining than NSAIDs like Ibuprofen."
+      },
+      {
+        id: "pan40",
+        brand_name: "Pan 40",
+        generic_salt: "Pantoprazole Gastro-Resistant (40mg)",
+        category: "Proton Pump Inhibitor (PPI)",
+        mrp_inr: 155.00,
+        generic_price_inr: 32.00,
+        generic_equivalent_name: "Jan Aushadhi Pantoprazole 40mg",
+        brand_manufacturer: "Alkem Laboratories",
+        icon_type: "tablets",
+        picture_emoji: "🟡",
+        purpose: "Heals acid reflux, gastritis, and protects stomach lining",
+        sodium_content: "Negligible",
+        food_warning: "Best taken once daily in the morning, 30 to 45 minutes before breakfast.",
+        contraindicated_conditions: [],
+        better_alternative_rationale: "Long-acting, zero-sodium choice for acidity that does not disturb hypertension."
+      },
+      {
+        id: "atorva10",
+        brand_name: "Atorva 10",
+        generic_salt: "Atorvastatin (10mg)",
+        category: "Cholesterol / Statin",
+        mrp_inr: 120.00,
+        generic_price_inr: 35.00,
+        generic_equivalent_name: "Jan Aushadhi Atorvastatin 10mg",
+        brand_manufacturer: "Zydus Cadila",
+        icon_type: "tablets",
+        picture_emoji: "🔵",
+        purpose: "Lowers bad LDL cholesterol and triglycerides",
+        sodium_content: "None",
+        food_warning: "Avoid grapefruit juice as it raises medication concentration in blood.",
+        contraindicated_conditions: [
+          {
+            condition: "Active Liver Disease",
+            severity: "CRITICAL",
+            reason: "Can transiently raise hepatic transaminases."
+          }
+        ],
+        better_alternative_rationale: "Jan Aushadhi generic equivalent cuts ₹85/month on long-term preventive therapy."
+      }
+    ];
+
+    // Master list of toggleable medical conditions
+    const MASTER_CONDITIONS = [
+      { name: "Hypertension", icon: "fa-heart-pulse", desc: "High Blood Pressure" },
+      { name: "Type 2 Diabetes", icon: "fa-droplet", desc: "High Blood Sugar" },
+      { name: "GERD / Acid Reflux", icon: "fa-fire-flame-simple", desc: "Heartburn & Acidity" },
+      { name: "Asthma", icon: "fa-lungs", desc: "Respiratory Sensitivity" },
+      { name: "Chronic Kidney Disease", icon: "fa-shield-halved", desc: "Renal Function Alert" },
+      { name: "Heart Failure", icon: "fa-heart-circle-bolt", desc: "Cardiovascular Care" }
+    ];
+
+    // -------------------------------------------------------------
+    // 2. USER STATE (Defaults to Indian Patient: Ramesh Kumar, 58)
+    // -------------------------------------------------------------
+    let userProfile = {
+      name: "Ramesh Kumar",
+      age: 58,
+      conditions: ["Hypertension", "GERD / Acid Reflux"],
+      myDrugs: [
+        {
+          id: "telma40",
+          dosage: "40 mg",
+          frequency: "1 Tablet Morning",
+          purpose: "Blood pressure regulation",
+          icon_type: "tablets",
+          picture_emoji: "💊"
+        },
+        {
+          id: "glycomet500",
+          dosage: "500 mg",
+          frequency: "1 Tablet After Dinner",
+          purpose: "Blood glucose management",
+          icon_type: "tablets",
+          picture_emoji: "⚪"
+        },
+        {
+          id: "eno",
+          dosage: "1 Sachet",
+          frequency: "As needed for acidity",
+          purpose: "Rapid heartburn relief",
+          icon_type: "powder",
+          picture_emoji: "🧪"
+        }
+      ]
+    };
+
+    // Load from localStorage if present
+    const storedProfile = localStorage.getItem("drugwise_user_profile");
+    if (storedProfile) {
+      try {
+        userProfile = JSON.parse(storedProfile);
+      } catch (e) {
+        console.error("Failed to parse stored profile", e);
+      }
+    }
+
+    function saveUserProfile() {
+      localStorage.setItem("drugwise_user_profile", JSON.stringify(userProfile));
+      updateProfileUIHeader();
+      evaluatePatientInteractions();
+      renderMyDrugsCards();
+      renderSuggestedDrugsForConditions();
+      populateQuickSavingsSummary();
+    }
+
+    // -------------------------------------------------------------
+    // 3. TAB CONTROLS (ONLY 1. KNOW YOUR DRUG & 2. MY DRUGS)
+    // -------------------------------------------------------------
+    let currentMainTab = 'know';
+
+    function switchMainTab(tab) {
+      currentMainTab = tab;
+      const knowSection = document.getElementById('section-know-drug');
+      const mySection = document.getElementById('section-my-drugs');
+      const navKnow = document.getElementById('navBtn-know');
+      const navMy = document.getElementById('navBtn-my');
+
+      if (tab === 'know') {
+        knowSection.classList.remove('hidden');
+        mySection.classList.add('hidden');
+
+        navKnow.className = "nav-tab-btn flex items-center space-x-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm bg-medblue-600 text-white border border-sky-400/40";
+        navMy.className = "nav-tab-btn flex items-center space-x-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition text-sky-200 hover:text-white hover:bg-medblue-800/60";
+      } else {
+        knowSection.classList.add('hidden');
+        mySection.classList.remove('hidden');
+
+        navMy.className = "nav-tab-btn flex items-center space-x-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm bg-medblue-600 text-white border border-sky-400/40";
+        navKnow.className = "nav-tab-btn flex items-center space-x-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition text-sky-200 hover:text-white hover:bg-medblue-800/60";
+        renderMyDrugsCards();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 4. TOP DYNAMIC SAFETY & INTERACTION BANNER (RED / ORANGE / GREEN)
+    // -------------------------------------------------------------
+    function evaluatePatientInteractions() {
+      const banner = document.getElementById('dynamicSafetyBannerContainer');
+      const myDrugObjects = userProfile.myDrugs.map(d => CLINICAL_MEDICINES.find(m => m.id === d.id)).filter(Boolean);
+
+      let criticalAlerts = [];
+      let moderateAlerts = [];
+      let positiveChecks = [];
+
+      // 1. Check Condition Contraindications (e.g., High-Sodium antacid vs Hypertension)
+      myDrugObjects.forEach(drug => {
+        if (drug.contraindicated_conditions && drug.contraindicated_conditions.length > 0) {
+          drug.contraindicated_conditions.forEach(contra => {
+            if (userProfile.conditions.includes(contra.condition)) {
+              if (contra.severity === "CRITICAL") {
+                criticalAlerts.push({
+                  title: `Adverse Health Collision: ${drug.brand_name} ↔ ${contra.condition}`,
+                  text: contra.reason,
+                  solution: drug.better_alternative_rationale
+                });
+              } else {
+                moderateAlerts.push({
+                  title: `Caution: ${drug.brand_name} with ${contra.condition}`,
+                  text: contra.reason,
+                  solution: drug.better_alternative_rationale
+                });
+              }
+            }
+          });
+        }
+      });
+
+      // 2. Check Drug-to-Drug Collisions between user's active medicines
+      const medIds = myDrugObjects.map(d => d.id);
+      if (medIds.includes('telma40') && medIds.includes('combiflam')) {
+        moderateAlerts.push({
+          title: `Drug-to-Drug Interaction: Telma 40 + Combiflam`,
+          text: `NSAIDs (Ibuprofen in Combiflam) blunt the vasodilating effect of Telmisartan and put additional hemodynamic strain on kidneys.`,
+          solution: `Use pure Paracetamol for analgesia instead of dual NSAID formulations.`
+        });
+      }
+      if (medIds.includes('glycomet500') && medIds.includes('combiflam')) {
+        moderateAlerts.push({
+          title: `Drug-to-Drug Interaction: Glycomet 500 + Combiflam`,
+          text: `Frequent NSAID ingestion impairs renal clearance of Metformin, marginally increasing lactic acidosis vulnerability.`,
+          solution: `Monitor hydration and avoid sustained daily Combiflam dosage.`
+        });
+      }
+
+      // Render Dynamic Top Banner
+      if (criticalAlerts.length > 0) {
+        // RED BANNER
+        const first = criticalAlerts[0];
+        banner.innerHTML = `
+          <div class="bg-gradient-to-r from-rose-500/15 via-red-500/10 to-rose-50 border-2 border-rose-500 rounded-3xl p-5 shadow-sm text-slate-900 transition animate-pulse-once">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div class="flex items-start space-x-3.5">
+                <div class="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-black bg-rose-600 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider">HIGH RISK (RED ALERT)</span>
+                    <span class="text-xs font-bold text-rose-800">${criticalAlerts.length} Critical Conflict Detected</span>
+                  </div>
+                  <h4 class="text-base font-black text-rose-950 mt-1">${first.title}</h4>
+                  <p class="text-xs text-rose-900 font-medium mt-1 leading-relaxed">${first.text}</p>
+                </div>
+              </div>
+              <div class="bg-white/80 p-3 rounded-2xl border border-rose-200 text-xs w-full md:w-auto shrink-0 shadow-sm">
+                <span class="font-extrabold text-emerald-800 flex items-center"><i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i>Better For You:</span>
+                <p class="text-slate-700 text-[11px] mt-0.5 max-w-sm">${first.solution}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (moderateAlerts.length > 0) {
+        // ORANGE / AMBER BANNER
+        const first = moderateAlerts[0];
+        banner.innerHTML = `
+          <div class="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-50 border-2 border-amber-500 rounded-3xl p-5 shadow-sm text-slate-900">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <div class="flex items-start space-x-3.5">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                  <i class="fa-solid fa-circle-exclamation text-lg"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-black bg-amber-500 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider">MODERATE WARNING (ORANGE)</span>
+                    <span class="text-xs font-bold text-amber-900">Check Routine Spacing</span>
+                  </div>
+                  <h4 class="text-base font-black text-amber-950 mt-1">${first.title}</h4>
+                  <p class="text-xs text-amber-900 font-medium mt-1">${first.text}</p>
+                </div>
+              </div>
+              <div class="bg-white/80 p-3 rounded-2xl border border-amber-200 text-xs w-full md:w-auto shrink-0 shadow-sm">
+                <span class="font-extrabold text-medblue-900 flex items-center"><i class="fa-solid fa-lightbulb text-amber-600 mr-1.5"></i>Safe Action:</span>
+                <p class="text-slate-700 text-[11px] mt-0.5 max-w-sm">${first.solution}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // GREEN BANNER (All Clear)
+        banner.innerHTML = `
+          <div class="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-50 border-2 border-emerald-500 rounded-3xl p-4 shadow-sm text-slate-900">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3.5">
+                <div class="w-9 h-9 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <i class="fa-solid fa-shield-check text-base"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-black bg-emerald-600 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider">ALL CLEAR (GREEN)</span>
+                    <span class="text-xs font-bold text-emerald-900">No Documented Adverse Interactions</span>
+                  </div>
+                  <p class="text-xs text-slate-700 mt-0.5">Your ${userProfile.myDrugs.length} registered medications are well-tolerated alongside your profile (${userProfile.conditions.join(', ')}).</p>
+                </div>
+              </div>
+              <span class="text-xs font-bold text-emerald-800 bg-white/80 px-3 py-1.5 rounded-xl border border-emerald-200 hidden sm:block">
+                Regimen Harmonized
+              </span>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 5. KNOW YOUR DRUG: SEARCH & PERSONALIZED SAFETY ANALYSIS
+    // -------------------------------------------------------------
+    function handleKnowDrugSearch(term) {
+      renderKnowDrugAnalysis(term);
+    }
+
+    function applySearchQuery(name) {
+      document.getElementById('knowDrugSearchInput').value = name;
+      renderKnowDrugAnalysis(name);
+    }
+
+    function clearSearch() {
+      document.getElementById('knowDrugSearchInput').value = '';
+      renderKnowDrugAnalysis('');
+    }
+
+    function renderKnowDrugAnalysis(term = '') {
+      const container = document.getElementById('knowDrugResultContainer');
+      const query = term.trim().toLowerCase();
+
+      // Find best match or default to Eno if empty for educational preview
+      let drug = null;
+      if (query.length > 0) {
+        drug = CLINICAL_MEDICINES.find(m => 
+          m.brand_name.toLowerCase().includes(query) || 
+          m.generic_salt.toLowerCase().includes(query) ||
+          m.category.toLowerCase().includes(query)
+        );
+      } else {
+        // Default showcased lookup: Eno (illustrating sodium/hypertension clash)
+        drug = CLINICAL_MEDICINES.find(m => m.id === 'eno');
+      }
+
+      if (!drug) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-8 text-center border border-sky-100 shadow-sm">
+            <div class="w-14 h-14 bg-sky-50 text-medblue-500 rounded-2xl flex items-center justify-center mx-auto text-2xl mb-3">
+              <i class="fa-solid fa-capsules"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-800">No exact match found for "${term}"</h3>
+            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Try searching common medicines like Eno, Gelusil, Telma 40, Glycomet, Combiflam, or Pan 40.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Evaluate personalized safety against the logged-in customer's profile
+      let riskLevel = "GREEN";
+      let riskTitle = "Safe to Take With Your Health Conditions";
+      let riskExplanation = `This medication has no known acute contraindications with your diagnosed conditions (${userProfile.conditions.join(', ')}).`;
+      let alertCardStyle = "border-emerald-500 bg-emerald-50/60 text-emerald-950";
+      let alertBadgeStyle = "bg-emerald-600 text-white";
+      let alertIcon = "fa-circle-check text-emerald-600";
+
+      // Check condition conflicts
+      if (drug.contraindicated_conditions) {
+        const conflict = drug.contraindicated_conditions.find(c => userProfile.conditions.includes(c.condition));
+        if (conflict) {
+          if (conflict.severity === 'CRITICAL') {
+            riskLevel = "RED";
+            riskTitle = `CRITICAL WARNING: Direct Conflict with ${conflict.condition}!`;
+            riskExplanation = conflict.reason;
+            alertCardStyle = "border-rose-500 bg-rose-50/70 text-rose-950";
+            alertBadgeStyle = "bg-rose-600 text-white animate-pulse";
+            alertIcon = "fa-triangle-exclamation text-rose-600";
+          } else {
+            riskLevel = "ORANGE";
+            riskTitle = `Caution Required: Potential Contraindication with ${conflict.condition}`;
+            riskExplanation = conflict.reason;
+            alertCardStyle = "border-amber-500 bg-amber-50/70 text-amber-950";
+            alertBadgeStyle = "bg-amber-500 text-white";
+            alertIcon = "fa-circle-exclamation text-amber-600";
+          }
+        }
+      }
+
+      const savings = drug.mrp_inr - drug.generic_price_inr;
+      const savingsPercent = Math.round((savings / drug.mrp_inr) * 100);
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border border-sky-100 shadow-sm space-y-6">
+          
+          <!-- Header of Searched Drug -->
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-sky-100 pb-5">
+            <div class="flex items-start space-x-4">
+              <div class="w-14 h-14 rounded-2xl bg-medblue-50 border border-sky-200 flex items-center justify-center text-3xl shadow-inner">
+                ${drug.picture_emoji}
+              </div>
+              <div>
+                <span class="text-[11px] font-bold text-medblue-600 bg-medblue-50 px-2.5 py-0.5 rounded-md uppercase tracking-wider">${drug.category}</span>
+                <h2 class="text-2xl font-black text-medblue-950 mt-1">${drug.brand_name}</h2>
+                <p class="text-xs font-semibold text-slate-600 mt-0.5">
+                  <i class="fa-solid fa-flask-vial text-medblue-500 mr-1"></i> Active Molecule: <span class="text-medblue-900 font-bold">${drug.generic_salt}</span>
+                </p>
+                <p class="text-xs text-slate-500 mt-1">Manufacturer: ${drug.brand_manufacturer} | Sodium: <span class="font-bold text-slate-700">${drug.sodium_content}</span></p>
+              </div>
+            </div>
+
+            <div class="bg-medblue-50/80 p-3.5 rounded-2xl border border-sky-200 text-right sm:text-right">
+              <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Brand MRP (India)</span>
+              <div class="text-2xl font-black text-medblue-950">₹${drug.mrp_inr.toFixed(2)}</div>
+              <span class="text-[10px] text-slate-500 font-semibold">Standard Pack</span>
+            </div>
+          </div>
+
+          <!-- PERSONALIZED SAFETY ASSESSMENT BOX (RED / ORANGE / GREEN) -->
+          <div class="p-5 rounded-2xl border-2 ${alertCardStyle} shadow-sm">
+            <div class="flex items-start space-x-3.5">
+              <i class="fa-solid ${alertIcon} text-2xl mt-0.5"></i>
+              <div class="space-y-1 w-full">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <span class="text-xs font-black uppercase px-2.5 py-0.5 rounded-full ${alertBadgeStyle}">
+                    ${riskLevel} SAFETY ALERT FOR ${userProfile.name.toUpperCase()}
+                  </span>
+                  <span class="text-xs font-bold text-slate-600">Evaluated against: ${userProfile.conditions.join(', ')}</span>
+                </div>
+                <h4 class="text-base font-extrabold mt-1">${riskTitle}</h4>
+                <p class="text-xs leading-relaxed font-medium">${riskExplanation}</p>
+                <div class="mt-3 pt-2 border-t border-black/10 flex items-center space-x-2 text-xs">
+                  <i class="fa-solid fa-utensils text-medblue-600"></i>
+                  <span class="font-bold">Usage & Food Advisory:</span>
+                  <span>${drug.food_warning}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CERTIFIED ALTERNATIVES & PRICE COMPARISON -->
+          <div class="bg-gradient-to-br from-sky-50/50 to-blue-50/30 rounded-2xl p-6 border border-sky-200/80 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">Pradhan Mantri Jan Aushadhi & Verified Generics</span>
+                <h3 class="text-lg font-bold text-medblue-950 mt-1">Certified Cheaper Generic Alternative</h3>
+              </div>
+              <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+                Save ₹${savings.toFixed(2)} (${savingsPercent}% Cheaper)
+              </span>
+            </div>
+
+            <!-- Side by Side Price Spec -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+              <div class="bg-white p-4 rounded-xl border border-sky-200">
+                <span class="text-xs text-slate-500 font-semibold uppercase">Currently Searched (Branded)</span>
+                <div class="text-base font-extrabold text-slate-800 mt-1">${drug.brand_name}</div>
+                <div class="text-sm font-bold text-rose-600 mt-1">₹${drug.mrp_inr.toFixed(2)}</div>
+                <p class="text-[11px] text-slate-500 mt-2">${drug.brand_manufacturer}</p>
+              </div>
+
+              <div class="bg-white p-4 rounded-xl border-2 border-emerald-400 relative shadow-sm">
+                <span class="absolute top-2 right-2 text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded">Govt. Verified</span>
+                <span class="text-xs text-emerald-700 font-bold uppercase">Generic Equivalent Alternative</span>
+                <div class="text-base font-extrabold text-emerald-900 mt-1">${drug.generic_equivalent_name}</div>
+                <div class="text-base font-black text-emerald-700 mt-1">₹${drug.generic_price_inr.toFixed(2)}</div>
+                <p class="text-[11px] text-emerald-800 mt-2">100% Active Bioequivalence</p>
+              </div>
+            </div>
+
+            <!-- Better For You Badge & Rationale -->
+            <div class="p-4 rounded-xl bg-white border border-sky-200 flex items-start space-x-3">
+              <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                <i class="fa-solid fa-thumbs-up text-sm"></i>
+              </div>
+              <div class="text-xs">
+                <span class="font-extrabold text-medblue-950">Better For You Rationale:</span>
+                <p class="text-slate-600 mt-0.5 leading-relaxed">${drug.better_alternative_rationale}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+              <button onclick="addDrugToMyList('${drug.id}')" class="text-xs font-bold text-medblue-700 hover:text-medblue-900 flex items-center space-x-1.5 transition">
+                <i class="fa-solid fa-plus-circle text-sm"></i>
+                <span>Add ${drug.brand_name} to My Drugs</span>
+              </button>
+              <button onclick="showToast('Affiliate Link: Sourcing generic equivalent from Jan Aushadhi Kendra / Tata 1mg...', 'success')" class="text-xs font-bold bg-medblue-700 hover:bg-medblue-800 text-white px-4 py-2 rounded-xl shadow transition">
+                Order Generic & Save ₹${savings.toFixed(2)}
+              </button>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    // Suggested Drugs Feed for logged in conditions
+    function renderSuggestedDrugsForConditions() {
+      const container = document.getElementById('suggestedConditionDrugsGrid');
+      const conditionsLabel = document.getElementById('recProfileConditions');
+      conditionsLabel.innerText = userProfile.conditions.join(', ') || "General Wellness";
+
+      container.innerHTML = '';
+
+      // Curate safe recommendations according to conditions
+      let recommendations = [];
+
+      if (userProfile.conditions.includes('Hypertension')) {
+        recommendations.push({
+          badge: "Safe For Hypertension",
+          brand: "Gelusil Liquid (Low Sodium)",
+          salt: "Aluminium + Magnesium Hydroxide",
+          why: "Zero effervescent sodium load. Protects against blood pressure spikes unlike regular soda antacids.",
+          price: "₹45 (Generic)",
+          savings: "Save ₹80"
+        });
+        recommendations.push({
+          badge: "Certified Generic BP",
+          brand: "Jan Aushadhi Telmisartan 40mg",
+          salt: "Telmisartan IP 40mg",
+          why: "Identical cardiovascular vessel relaxation at an 80% cost reduction vs brand-name Telma.",
+          price: "₹28 / strip",
+          savings: "Save ₹114"
+        });
+      }
+
+      if (userProfile.conditions.includes('GERD / Acid Reflux')) {
+        recommendations.push({
+          badge: "Safe For Acid Reflux",
+          brand: "Jan Aushadhi Pantoprazole 40mg",
+          salt: "Pantoprazole IP",
+          why: "Potent gastric acid secretion block without the mucosal irritation of NSAID painkillers.",
+          price: "₹32 / strip",
+          savings: "Save ₹123"
+        });
+      }
+
+      if (userProfile.conditions.includes('Type 2 Diabetes')) {
+        recommendations.push({
+          badge: "Diabetes Care",
+          brand: "Generic Metformin 500mg ER",
+          salt: "Metformin Hydrochloride",
+          why: "Extended release formula minimizes stomach nausea while maintaining steady fasting glucose control.",
+          price: "₹14.50 / strip",
+          savings: "Save ₹50"
+        });
+      }
+
+      // Default card if none matched
+      if (recommendations.length === 0) {
+        recommendations.push({
+          badge: "General Health",
+          brand: "Jan Aushadhi Paracetamol 650",
+          salt: "Paracetamol IP 650mg",
+          why: "Safe, liver-monitored fever and pain alternative that spares the stomach lining.",
+          price: "₹12 / strip",
+          savings: "Save ₹33"
+        });
+      }
+
+      recommendations.forEach(rec => {
+        const card = document.createElement('div');
+        card.className = "bg-white p-5 rounded-2xl border border-sky-100 shadow-sm flex flex-col justify-between hover:border-medblue-300 transition";
+        card.innerHTML = `
+          <div>
+            <span class="text-[10px] font-bold text-medblue-700 bg-medblue-50 px-2 py-0.5 rounded-full uppercase">${rec.badge}</span>
+            <h4 class="text-base font-extrabold text-slate-900 mt-2">${rec.brand}</h4>
+            <p class="text-xs text-medblue-800 font-semibold">${rec.salt}</p>
+            <p class="text-xs text-slate-600 mt-2 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">${rec.why}</p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-sky-50 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400">Generic MRP</span>
+              <p class="text-sm font-black text-emerald-700">${rec.price}</p>
+            </div>
+            <span class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">${rec.savings}</span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // -------------------------------------------------------------
+    // 6. MY DRUGS SECTION: DISPLAY, HOVER ALTERNATIVES & MANAGEMENT
+    // -------------------------------------------------------------
+    function renderMyDrugsCards() {
+      const container = document.getElementById('myDrugsCardsGrid');
+      const badgeCount = document.getElementById('myDrugsCountBadge');
+      badgeCount.innerText = userProfile.myDrugs.length;
+
+      document.getElementById('myDrugsPatientSummary').innerText = 
+        `${userProfile.name} (${userProfile.age} yrs) — Diagnosed: ${userProfile.conditions.join(', ') || 'No chronic conditions listed'}`;
+
+      container.innerHTML = '';
+
+      if (userProfile.myDrugs.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white rounded-3xl p-12 text-center border border-sky-100 shadow-sm">
+            <i class="fa-solid fa-box-open text-4xl text-sky-300 mb-3"></i>
+            <h3 class="text-base font-bold text-slate-800">Your Medicine Cabinet is Empty</h3>
+            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Click "Add New Medicine" above or search in "1. Know Your Drug" to track your daily medications.</p>
+          </div>
+        `;
+        return;
+      }
+
+      userProfile.myDrugs.forEach(userMed => {
+        const drug = CLINICAL_MEDICINES.find(m => m.id === userMed.id) || {
+          brand_name: userMed.id,
+          generic_salt: "Prescribed Formulation",
+          mrp_inr: 100.0,
+          generic_price_inr: 25.0,
+          generic_equivalent_name: "Generic Equivalent",
+          better_alternative_rationale: "Generic alternative provides equivalent therapeutic response with substantial cost savings."
+        };
+
+        const savings = drug.mrp_inr - drug.generic_price_inr;
+        const savingsPercent = Math.round((savings / drug.mrp_inr) * 100);
+
+        // Check if this drug clashes with patient's conditions
+        let isAdverse = false;
+        let adverseReason = "";
+        if (drug.contraindicated_conditions) {
+          const clash = drug.contraindicated_conditions.find(c => userProfile.conditions.includes(c.condition));
+          if (clash) {
+            isAdverse = true;
+            adverseReason = clash.reason;
+          }
+        }
+
+        const card = document.createElement('div');
+        card.className = "alternative-card group bg-white rounded-3xl border border-sky-100 shadow-sm overflow-hidden flex flex-col justify-between relative";
+        
+        card.innerHTML = `
+          <!-- Card Top Content -->
+          <div class="p-6">
+            
+            <!-- Picture & Basic Specs Header -->
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-medblue-50 border border-sky-200 flex items-center justify-center text-2xl shadow-inner shrink-0">
+                  ${userMed.picture_emoji || '💊'}
+                </div>
+                <div>
+                  <h3 class="text-lg font-black text-medblue-950">${drug.brand_name}</h3>
+                  <p class="text-xs text-slate-500 font-semibold">${userMed.dosage} • ${userMed.frequency}</p>
+                </div>
+              </div>
+
+              <!-- Delete Action -->
+              <button onclick="removeDrugFromMyList('${userMed.id}')" title="Remove from cabinet" class="text-slate-300 hover:text-rose-600 transition p-1">
+                <i class="fa-solid fa-trash-can text-sm"></i>
+              </button>
+            </div>
+
+            <!-- Active Molecule -->
+            <div class="mt-3.5 pt-3 border-t border-sky-50 flex items-center justify-between text-xs">
+              <span class="text-slate-500 font-medium">Active Molecule:</span>
+              <span class="font-bold text-medblue-900 truncate max-w-[180px]">${drug.generic_salt}</span>
+            </div>
+
+            <!-- Purpose Tag -->
+            <div class="mt-2 text-xs text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100">
+              <span class="font-semibold text-slate-700">Purpose:</span> ${userMed.purpose || drug.purpose}
+            </div>
+
+            <!-- In-Card Adverse Alert if exists -->
+            ${isAdverse ? `
+              <div class="mt-3 p-2.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs">
+                <div class="flex items-center space-x-1.5 font-black text-rose-700">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>Health Warning for You:</span>
+                </div>
+                <p class="text-[11px] mt-0.5 leading-snug font-medium">${adverseReason}</p>
+              </div>
+            ` : ''}
+
+          </div>
+
+          <!-- HOVER / REVEAL ALTERNATIVES & PRICE DIFFERENCE SECTION -->
+          <div class="bg-gradient-to-br from-medblue-50 to-blue-50/60 p-5 border-t border-sky-100">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-extrabold text-medblue-700 uppercase tracking-wider">
+                <i class="fa-solid fa-repeat mr-1"></i> Generic Alternative
+              </span>
+              <span class="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+                Save ${savingsPercent}% (₹${savings.toFixed(0)}/mo)
+              </span>
+            </div>
+
+            <div class="mt-2 flex items-baseline justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-800">${drug.generic_equivalent_name}</p>
+                <p class="text-[11px] text-slate-500">Jan Aushadhi Equivalent</p>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-slate-400 line-through">₹${drug.mrp_inr.toFixed(0)}</span>
+                <span class="text-sm font-black text-emerald-700 ml-1">₹${drug.generic_price_inr.toFixed(0)}</span>
+              </div>
+            </div>
+
+            <!-- Better for you badge on hover -->
+            <div class="mt-3 pt-2.5 border-t border-sky-200/60 text-[11px] text-slate-700">
+              <span class="font-black text-emerald-800 flex items-center">
+                <i class="fa-solid fa-award text-emerald-600 mr-1"></i> Better For You:
+              </span>
+              <p class="text-slate-600 mt-0.5 leading-relaxed">${drug.better_alternative_rationale}</p>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      calculateTotalMonthlySavings();
+    }
+
+    function calculateTotalMonthlySavings() {
+      let totalMonthly = 0;
+      userProfile.myDrugs.forEach(d => {
+        const med = CLINICAL_MEDICINES.find(m => m.id === d.id);
+        if (med) {
+          totalMonthly += (med.mrp_inr - med.generic_price_inr);
+        }
+      });
+      const el = document.getElementById('totalMonthlySavingsIndicator');
+      if (el) {
+        el.innerText = `Potential Cabinet Savings: ₹${totalMonthly.toFixed(0)} / month`;
+      }
+    }
+
+    function populateQuickSavingsSummary() {
+      const tbody = document.getElementById('quickSavingsSummaryTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      userProfile.myDrugs.forEach(d => {
+        const med = CLINICAL_MEDICINES.find(m => m.id === d.id);
+        if (med) {
+          const savings = med.mrp_inr - med.generic_price_inr;
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-sky-50/50 transition";
+          tr.innerHTML = `
+            <td class="p-3.5 font-bold text-slate-900">${med.brand_name}</td>
+            <td class="p-3.5 text-slate-600 font-medium">${med.generic_salt}</td>
+            <td class="p-3.5 font-bold text-medblue-900">${med.generic_equivalent_name}</td>
+            <td class="p-3.5 text-rose-600 font-bold">₹${med.mrp_inr.toFixed(2)}</td>
+            <td class="p-3.5 text-emerald-700 font-bold">₹${med.generic_price_inr.toFixed(2)}</td>
+            <td class="p-3.5 text-emerald-800 font-black">+₹${savings.toFixed(2)} / strip</td>
+            <td class="p-3.5 text-right">
+              <button onclick="showToast('Initiating generic alternative switch via Jan Aushadhi...', 'success')" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold px-3 py-1.5 rounded-lg border border-emerald-200 transition">
+                Switch
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      });
+    }
+
+    function addDrugToMyList(id) {
+      if (userProfile.myDrugs.some(d => d.id === id)) {
+        showToast('This medicine is already in your cabinet!', 'warning');
+        return;
+      }
+      const med = CLINICAL_MEDICINES.find(m => m.id === id);
+      userProfile.myDrugs.push({
+        id: id,
+        dosage: "Standard dose",
+        frequency: "1 Tablet daily",
+        purpose: med.purpose,
+        icon_type: med.icon_type,
+        picture_emoji: med.picture_emoji
+      });
+      saveUserProfile();
+      showToast(`Added ${med.brand_name} to "My Drugs"`, 'success');
+      switchMainTab('my');
+    }
+
+    function removeDrugFromMyList(id) {
+      userProfile.myDrugs = userProfile.myDrugs.filter(d => d.id !== id);
+      saveUserProfile();
+      showToast('Medicine removed from your cabinet.', 'info');
+    }
+
+    // -------------------------------------------------------------
+    // 7. PROFILE ONBOARDING & MEDICAL CONDITION EDITOR
+    // -------------------------------------------------------------
+    function updateProfileUIHeader() {
+      document.getElementById('profileHeaderName').innerText = userProfile.name;
+      document.getElementById('profileHeaderAge').innerText = `${userProfile.age}y`;
+      document.getElementById('profileAvatarInitial').innerText = userProfile.name.charAt(0).toUpperCase();
+      document.getElementById('profileHeaderConditionsSummary').innerText = 
+        userProfile.conditions.join(', ') || 'No conditions specified';
+    }
+
+    function openProfileModal() {
+      document.getElementById('inputProfName').value = userProfile.name;
+      document.getElementById('inputProfAge').value = userProfile.age;
+
+      // Populate Conditions Checkbox Grid
+      const condGrid = document.getElementById('conditionsCheckboxGrid');
+      condGrid.innerHTML = '';
+
+      MASTER_CONDITIONS.forEach(mc => {
+        const isChecked = userProfile.conditions.includes(mc.name);
+        const label = document.createElement('label');
+        label.className = `flex items-start space-x-2.5 p-2.5 rounded-xl border cursor-pointer transition ${
+          isChecked ? 'bg-medblue-50 border-medblue-400 text-medblue-950 font-bold' : 'bg-white border-slate-200 text-slate-700'
+        }`;
+        label.innerHTML = `
+          <input type="checkbox" name="profCondition" value="${mc.name}" ${isChecked ? 'checked' : ''} class="mt-0.5 rounded text-medblue-600 focus:ring-medblue-500">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <i class="fa-solid ${mc.icon} text-medblue-600 text-xs"></i>
+              <span>${mc.name}</span>
+            </div>
+            <p class="text-[10px] text-slate-500 font-normal">${mc.desc}</p>
+          </div>
+        `;
+        condGrid.appendChild(label);
+      });
+
+      // Populate Quick Medicine Checklist
+      const medList = document.getElementById('quickMedChecklistContainer');
+      medList.innerHTML = '';
+      CLINICAL_MEDICINES.forEach(cm => {
+        const isSelected = userProfile.myDrugs.some(d => d.id === cm.id);
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-between p-2 rounded-lg hover:bg-white text-xs border border-transparent hover:border-slate-200 transition";
+        div.innerHTML = `
+          <label class="flex items-center space-x-2 cursor-pointer w-full">
+            <input type="checkbox" name="quickCabinetMed" value="${cm.id}" ${isSelected ? 'checked' : ''} class="rounded text-medblue-600">
+            <span class="font-semibold text-slate-800">${cm.picture_emoji} ${cm.brand_name}</span>
+          </label>
+          <span class="text-[10px] text-slate-400">${cm.category}</span>
+        `;
+        medList.appendChild(div);
+      });
+
+      document.getElementById('profileModal').classList.remove('hidden');
+    }
+
+    function closeProfileModal() {
+      document.getElementById('profileModal').classList.add('hidden');
+    }
+
+    function handleSaveProfile(e) {
+      e.preventDefault();
+      const name = document.getElementById('inputProfName').value.trim();
+      const age = parseInt(document.getElementById('inputProfAge').value) || 50;
+
+      // Extract checked conditions
+      const conditionBoxes = document.querySelectorAll('input[name="profCondition"]:checked');
+      const selectedConditions = Array.from(conditionBoxes).map(cb => cb.value);
+
+      // Extract checked medicines
+      const medBoxes = document.querySelectorAll('input[name="quickCabinetMed"]:checked');
+      const selectedMedIds = Array.from(medBoxes).map(mb => mb.value);
+
+      // Update user state
+      userProfile.name = name;
+      userProfile.age = age;
+      userProfile.conditions = selectedConditions;
+
+      // Rebuild myDrugs from checklist preserving existing metadata if available
+      userProfile.myDrugs = selectedMedIds.map(id => {
+        const existing = userProfile.myDrugs.find(d => d.id === id);
+        if (existing) return existing;
+        const med = CLINICAL_MEDICINES.find(m => m.id === id);
+        return {
+          id: id,
+          dosage: "Standard dose",
+          frequency: "1 Tablet daily",
+          purpose: med.purpose,
+          icon_type: med.icon_type,
+          picture_emoji: med.picture_emoji
+        };
+      });
+
+      saveUserProfile();
+      closeProfileModal();
+      showToast(`Health profile updated for ${name}. Safety alerts refreshed!`, 'success');
+    }
+
+    // -------------------------------------------------------------
+    // 8. ADD NEW DRUG MODAL LOGIC
+    // -------------------------------------------------------------
+    function openAddDrugModal() {
+      const select = document.getElementById('addDrugCatalogSelect');
+      select.innerHTML = '';
+      CLINICAL_MEDICINES.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.innerText = `${m.brand_name} (${m.category}) - ₹${m.mrp_inr.toFixed(0)}`;
+        select.appendChild(opt);
+      });
+
+      fillDrugDefaults(CLINICAL_MEDICINES[0].id);
+      document.getElementById('addDrugModal').classList.remove('hidden');
+    }
+
+    function closeAddDrugModal() {
+      document.getElementById('addDrugModal').classList.add('hidden');
+    }
+
+    function fillDrugDefaults(medId) {
+      const med = CLINICAL_MEDICINES.find(m => m.id === medId);
+      if (med) {
+        document.getElementById('addDrugDosage').value = med.id === 'eno' ? "1 Sachet" : "1 Tablet";
+        document.getElementById('addDrugFrequency').value = med.id === 'eno' ? "When heartburn occurs" : "1 Tablet Morning";
+        document.getElementById('addDrugPurpose').value = med.purpose;
+        document.getElementById('addDrugIcon').value = med.icon_type;
+      }
+    }
+
+    function handleManualAddDrug(e) {
+      e.preventDefault();
+      const medId = document.getElementById('addDrugCatalogSelect').value;
+      const dosage = document.getElementById('addDrugDosage').value;
+      const frequency = document.getElementById('addDrugFrequency').value;
+      const purpose = document.getElementById('addDrugPurpose').value;
+      const icon = document.getElementById('addDrugIcon').value;
+
+      if (userProfile.myDrugs.some(d => d.id === medId)) {
+        showToast('This medicine is already in your list!', 'warning');
+        return;
+      }
+
+      const med = CLINICAL_MEDICINES.find(m => m.id === medId);
+
+      userProfile.myDrugs.push({
+        id: medId,
+        dosage: dosage,
+        frequency: frequency,
+        purpose: purpose,
+        icon_type: icon,
+        picture_emoji: med.picture_emoji
+      });
+
+      saveUserProfile();
+      closeAddDrugModal();
+      showToast(`Added ${med.brand_name} to your cabinet!`, 'success');
+    }
+
+    // -------------------------------------------------------------
+    // 9. TOAST NOTIFICATION UTILITY
+    // -------------------------------------------------------------
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastBox');
+      const toast = document.createElement('div');
+
+      let bg = "bg-medblue-900 border-medblue-700 text-white";
+      let icon = "fa-circle-info text-sky-300";
+
+      if (type === 'success') {
+        bg = "bg-emerald-900 border-emerald-700 text-white";
+        icon = "fa-circle-check text-emerald-300";
+      } else if (type === 'warning') {
+        bg = "bg-amber-900 border-amber-700 text-white";
+        icon = "fa-triangle-exclamation text-amber-300";
+      }
+
+      toast.className = `${bg} border p-3.5 rounded-2xl shadow-xl flex items-center space-x-2.5 text-xs font-semibold transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+      toast.innerHTML = `<i class="fa-solid ${icon} text-sm"></i> <span>${message}</span>`;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // -------------------------------------------------------------
+    // 10. SYSTEM BOOTSTRAPPER
+    // -------------------------------------------------------------
+    window.onload = function() {
+      updateProfileUIHeader();
+      evaluatePatientInteractions();
+      renderKnowDrugAnalysis('Eno'); // Preset illustrative lookup
+      renderSuggestedDrugsForConditions();
+      renderMyDrugsCards();
+      populateQuickSavingsSummary();
+    };
+  </script>
+</body>
+</html>
